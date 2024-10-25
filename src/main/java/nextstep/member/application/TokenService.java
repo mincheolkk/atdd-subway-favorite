@@ -27,7 +27,10 @@ public class TokenService {
     }
 
     public TokenResponse createTokenFromGithub(GithubTokenRequest request) {
-        String token = githubClient.requestGithubToken(request.getCode());
-        return new TokenResponse(token);
+        var token = githubClient.requestGithubToken(request.getCode());
+        var githubProfileResponse = githubClient.requestUserProfile(token);
+        Member member = memberService.findMemberByEmailOrCreate(githubProfileResponse.getEmail(),
+                githubProfileResponse.getAge());
+        return createToken(member.getEmail(), member.getPassword());
     }
 }
