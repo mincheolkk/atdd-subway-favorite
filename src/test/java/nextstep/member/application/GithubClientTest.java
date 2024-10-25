@@ -29,4 +29,15 @@ public class GithubClientTest {
         assertThat(actual).isNotBlank();
         assertThat(actual).isEqualTo(사용자1_access_token);
     }
+
+    @Test
+    void 토큰으로_유저프로필을_응답받는다() {
+        var accessToken = 사용자1.getAccessToken();
+        var 사용자1_email = 사용자1.getEmail();
+
+        var result = githubClient.requestUserProfile(accessToken);
+
+        assertThat(result.getEmail()).isEqualTo(사용자1_email);
+        assertThat(result.getAge()).isEqualTo(20);
+    }
 }

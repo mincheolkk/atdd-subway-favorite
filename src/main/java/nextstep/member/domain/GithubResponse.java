@@ -28,4 +28,11 @@ public enum GithubResponse {
                 .findAny().get();
     }
 
+    public static String getEmailByAccessToken(String accessToken) {
+        return Arrays.stream(GithubResponse.values())
+                .filter(x -> x.getAccessToken().equals(accessToken))
+                .map(GithubResponse::getEmail)
+                .findAny().get();
+    }
+
 }
