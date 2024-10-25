@@ -3,6 +3,7 @@ package nextstep.member.acceptance;
 import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;
 import nextstep.member.application.dto.GithubTokenRequest;
+import nextstep.member.application.dto.MemberResponse;
 import nextstep.member.domain.Member;
 import nextstep.member.domain.MemberRepository;
 import nextstep.utils.AcceptanceTest;
@@ -14,13 +15,14 @@ import org.springframework.http.HttpStatus;
 import static nextstep.member.acceptance.AuthSteps.깃헙_로그인_요청;
 import static nextstep.member.acceptance.AuthSteps.로그인_토큰발급_요청;
 import static nextstep.member.acceptance.MemberSteps.유저조회_요청;
+import static nextstep.member.acceptance.MemberSteps.회원_생성_요청;
+import static nextstep.member.domain.GithubResponse.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class AuthAcceptanceTest extends AcceptanceTest {
     public static final String EMAIL = "admin@email.com";
     public static final String PASSWORD = "password";
     public static final Integer AGE = 20;
-    public static final String 사용자1_CODE = "aofijeowifjaoief";
 
     @Autowired
     private MemberRepository memberRepository;
@@ -40,16 +42,42 @@ class AuthAcceptanceTest extends AcceptanceTest {
         assertThat(memberInfoResponse.jsonPath().getString("email")).isEqualTo(EMAIL);
     }
 
-    @DisplayName("Github Auth")
+    /**
+     *  Given : 가입한 회원이 존재하고
+     *  When : 해당 회원이 깃헙 로그인을 요청하면
+     *  Then : 토큰을 발급한다.
+     */
     @Test
-    void 깃헙_로그인을_구현한다() {
+    void 회원이_깃헙로그인을_한다() {
         // given
-        GithubTokenRequest request = new GithubTokenRequest(사용자1_CODE);
+        회원_생성_요청(사용자1.getEmail(), "password", 20);
+        var request = new GithubTokenRequest(사용자1.getCode());
 
         // when
         ExtractableResponse<Response> response = 깃헙_로그인_요청(request);
 
         // then
         assertThat(response.jsonPath().getString("accessToken")).isNotBlank();
+    }
+
+    /**
+     *  Given : 비회원이
+     *  When : 깃헙 로그인을 요청하면
+     *  Then : 회원가입을 시키고 토큰을 발급한다.
+     */
+    @Test
+    void 비회원이_깃헙_로그인을_한다() {
+        // given
+        GithubTokenRequest request = new GithubTokenRequest(사용자2.getCode());
+
+        // when
+        ExtractableResponse<Response> response = 깃헙_로그인_요청(request);
+
+        // then
+        assertThat(response.jsonPath().getString("accessToken")).isNotBlank();
+
+        MemberResponse memberResponse = 유저조회_요청(response.jsonPath().getString("accessToken"))
+                .as(MemberResponse.class);
+        assertThat(memberResponse.getEmail()).isEqualTo(사용자2.getEmail());
     }
 }
